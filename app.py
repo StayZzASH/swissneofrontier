@@ -29,10 +29,13 @@ st.markdown(
 )
 
 # Connexion sécurisée à l'IA Cloud via Groq et les Secrets Streamlit
-client = OpenAI(
-    base_url="https://api.groq.com/openai/v1",
-    api_key=st.secrets["GROQ_API_KEY"],
-)
+try:
+    client = OpenAI(
+        base_url="https://api.groq.com/openai/v1",
+        api_key=st.secrets["GROQ_API_KEY"],
+    )
+except Exception as e:
+    st.error(f"Erreur de configuration des Secrets Streamlit : {e}")
 
 # Gestion des pages (Accueil vs App)
 if "page" not in st.session_state:
@@ -164,11 +167,12 @@ else:
                         for m in st.session_state.messages:
                             formatted_msgs.append({"role": m["role"], "content": m["content"]})
 
-                 response = client.chat.completions.create(
-                            model="openai/gpt-oss-20b",
+                        # Appel direct et sécurisé avec un modèle de référence ultra-stable
+                        response = client.chat.completions.create(
+                            model="llama-3.3-70b-versatile",
                             messages=formatted_msgs,
                             temperature=0.7,
-                            presence_penalty=0.5,
+                            max_tokens=1024,
                         )
                         reponse_ia = response.choices[0].message.content
                         st.markdown(reponse_ia)
