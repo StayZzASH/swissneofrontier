@@ -233,12 +233,33 @@ else:
                         for m in st.session_state.messages:
                             formatted_msgs.append({"role": m["role"], "content": m["content"]})
 
-                        response = client.chat.completions.create(
-                            model="llama-3.3-70b-versatile",
-                            messages=formatted_msgs,
-                            temperature=0.7,
-                            max_tokens=1024,
-                        )
+                        # Liste de secours automatique des modèles Groq actifs
+                        models_disponibles = [
+                            "openai/gpt-oss-120b",
+                            "openai/gpt-oss-20b",
+                            "llama-3.3-70b-versatile",
+                            "llama-3.1-8b-instant"
+                        ]
+
+                        response = None
+                        dernière_erreur = None
+
+                        for mod in models_disponibles:
+                            try:
+                                response = client.chat.completions.create(
+                                    model=mod,
+                                    messages=formatted_msgs,
+                                    temperature=0.7,
+                                    max_tokens=1024,
+                                )
+                                break # Si le modèle répond, on sort de la boucle
+                            except Exception as err:
+                                dernière_erreur = err
+                                continue
+
+                        if response is None:
+                            raise Exception(f"Tous les modèles ont échoué. Dernière erreur : {dernière_erreur}")
+
                         reponse_ia = response.choices[0].message.content
                         st.markdown(reponse_ia)
                         st.session_state.messages.append(
