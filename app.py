@@ -1,4 +1,5 @@
 import datetime
+import re
 import pandas as pd
 import plotly.express as px
 import requests
@@ -9,6 +10,77 @@ st.set_page_config(
     layout="wide",
     page_icon="🇨🇭",
 )
+
+# --- MODULE D'AUTHENTIFICATION ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "users_db" not in st.session_state:
+    st.session_state.users_db = {}
+if "current_user" not in st.session_state:
+    st.session_state.current_user = None
+
+if not st.session_state.authenticated:
+    st.title("🔐 Connexion au Terminal")
+
+    user_id = st.text_input(
+        "Identifiant (4 chiffres)", max_chars=4, key="login_id"
+    )
+
+    if user_id:
+        if not re.match(r"^\d{4}$", user_id):
+            st.error(
+                "Format invalide : l'identifiant doit contenir exactement 4 chiffres."
+            )
+        else:
+            if user_id not in st.session_state.users_db:
+                st.info(
+                    "Première connexion détectée pour cet identifiant. Définissez votre mot de passe."
+                )
+                new_password = st.text_input(
+                    "Créer le mot de passe",
+                    type="password",
+                    key="create_pass",
+                )
+                confirm_password = st.text_input(
+                    "Confirmer le mot de passe",
+                    type="password",
+                    key="confirm_pass",
+                )
+
+                if st.button("Enregistrer et se connecter"):
+                    if not new_password:
+                        st.error("Le mot de passe ne peut pas être vide.")
+                    elif new_password != confirm_password:
+                        st.error("Les mots de passe ne correspondent pas.")
+                    else:
+                        st.session_state.users_db[user_id] = new_password
+                        st.session_state.authenticated = True
+                        st.session_state.current_user = user_id
+                        st.success("Compte créé avec succès.")
+                        st.rerun()
+            else:
+                password = st.text_input(
+                    "Mot de passe", type="password", key="login_pass"
+                )
+                if st.button("Se connecter"):
+                    if st.session_state.users_db[user_id] == password:
+                        st.session_state.authenticated = True
+                        st.session_state.current_user = user_id
+                        st.rerun()
+                    else:
+                        st.error("Mot de passe incorrect.")
+
+    st.stop()
+
+# --- APPLICATION PRINCIPALE (Accessible après connexion) ---
+
+# Bouton de déconnexion dans la barre latérale
+with st.sidebar:
+    st.write(f"Utilisateur connecté : **{st.session_state.current_user}**")
+    if st.button("Déconnexion"):
+        st.session_state.authenticated = False
+        st.session_state.current_user = None
+        st.rerun()
 
 st.title("🇨🇭 SwissNeoFrontier - Terminal Financier")
 
