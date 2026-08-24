@@ -243,7 +243,7 @@ else:
                             formatted_msgs.append({"role": m["role"], "content": m["content"]})
 
                         response = client.chat.completions.create(
-                            model="llama-3.3-70b-versatile",
+                            model="llama-3.1-70b-versatile",
                             messages=formatted_msgs,
                             temperature=0.7,
                             max_tokens=1024,
