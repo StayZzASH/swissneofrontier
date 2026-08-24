@@ -165,7 +165,7 @@ else:
               formatted_msgs.append({"role": m["role"], "content": m["content"]})
 
             response = client.chat.completions.create(
-                model="mixtral-8x7b-32768",
+                model="llama-3.1-8b-instant",
                 messages=formatted_msgs,
                 temperature=0.7,
                 presence_penalty=0.5,
