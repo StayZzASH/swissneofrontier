@@ -95,6 +95,7 @@ with st.sidebar:
 
 st.title("🇨🇭 SwissNeoFrontier - Terminal Financier")
 
+
 # --- FOREX EUR/CHF ---
 @st.cache_data(ttl=3600)
 def fetch_forex_data():
@@ -186,7 +187,7 @@ with col_right:
 
 st.divider()
 
-# --- ASSISTANT GROK IA ---
+# --- ASSISTANT GROK IA SÉCURISÉ ---
 st.subheader("🚀 Assistant Grok (xAI)")
 
 key_input = st.text_input(
@@ -200,12 +201,13 @@ if key_input != st.session_state.api_key:
 
 
 def query_grok(prompt):
-    if not st.session_state.api_key:
+    api_key_clean = st.session_state.api_key.strip()
+    if not api_key_clean:
         return "⚠️ Veuillez d'abord renseigner votre clé API xAI ci-dessus."
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {st.session_state.api_key}",
+        "Authorization": f"Bearer {api_key_clean}",
     }
     sys_msg = (
         f"Tu es Grok, expert financier sur le terminal SwissNeoFrontier. "
@@ -213,13 +215,14 @@ def query_grok(prompt):
         f"Taux EUR/CHF actuel : {latest_rate:.4f}."
     )
     payload = {
-        "model": "grok-beta",
+        "model": "grok-2-latest",
         "messages": [
             {"role": "system", "content": sys_msg},
             {"role": "user", "content": prompt},
         ],
         "temperature": 0.7,
     }
+
     try:
         res = requests.post(
             "https://api.x.ai/v1/chat/completions",
@@ -227,10 +230,25 @@ def query_grok(prompt):
             json=payload,
             timeout=15,
         )
-        data = res.json()
-        if "choices" in data and len(data["choices"]) > 0:
-            return data["choices"][0]["message"]["content"]
-        return f"❌ Erreur API : {data.get('error', {}).get('message', 'Clé API invalide ou quota dépassé.')}"
+
+        try:
+            data = res.json()
+        except Exception:
+            return f"❌ Erreur HTTP {res.status_code} : Réponse brute non-JSON ({res.text})"
+
+        if isinstance(data, dict):
+            if "choices" in data and len(data["choices"]) > 0:
+                return data["choices"][0]["message"]["content"]
+            elif "error" in data:
+                err_detail = (
+                    data["error"].get("message", str(data["error"]))
+                    if isinstance(data["error"], dict)
+                    else str(data["error"])
+                )
+                return f"❌ Erreur API ({res.status_code}) : {err_detail}"
+
+        return f"❌ Erreur HTTP {res.status_code} : {res.text}"
+
     except Exception as e:
         return f"❌ Erreur réseau : {str(e)}"
 
