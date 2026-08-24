@@ -113,27 +113,21 @@ else:
         loyer_locatif_2 = st.number_input("Loyer estimé Locatif 2 (€/mois)", 0.0, 3000.0, 750.0, 25.0)
 
     # --- CALCULS FINANCIERS AVANCÉS ---
-    # Taux de change estimé CHF -> EUR (env. 1.05)
     taux_change = 1.05
 
-    # Charges sociales suisses estimées (~12.5%)
     net_1_chf = salaire_1 * 0.875
     net_2_chf = salaire_2 * 0.875 if situation != "Celibataire" else 0
     total_net_chf = net_1_chf + net_2_chf
 
-    # Impôt à la source estimé selon canton (~15% à 22%)
     taux_impot = 0.18 if canton == "geneve" else (0.16 if canton == "vaud" else 0.14)
     impot_estime_chf = total_net_chf * taux_impot
     
-    # Santé (LAMAL ~350 CHF/pers/mois vs CMU ~8% du revenu fiscal converti)
     nb_personnes = 2 if situation != "Celibataire" else 1
     cout_sante_chf = (350 * nb_personnes) if regime_sante == "LAMAL" else ((total_net_chf * 12 * 0.08) / 12)
 
-    # Net disponible en CHF puis converti en Euros
     disponible_chf = total_net_chf - impot_estime_chf - cout_sante_chf
     disponible_eur = disponible_chf * taux_change
 
-    # Simulation Crédit Immobilier global (taux 3.5% sur 25 ans -> mensualité ~ 5 € pour 1000 € empruntés)
     facteur_mensualite = 0.005
     mensualite_maison = prix_maison * facteur_mensualite
     mensualite_loc1 = prix_locatif_1 * facteur_mensualite
@@ -141,11 +135,9 @@ else:
     
     total_mensualites_credits = mensualite_maison + mensualite_loc1 + mensualite_loc2
     
-    # Revenus locatifs pondérés à 70% par les banques françaises
     revenus_locatifs_pondérés = (loyer_locatif_1 + loyer_locatif_2) * 0.70
     revenu_global_eur_pour_banque = disponible_eur + revenus_locatifs_pondérés
     
-    # Taux d'endettement global
     taux_endettement = (total_mensualites_credits / revenu_global_eur_pour_banque) if revenu_global_eur_pour_banque > 0 else 0
     reste_a_vivre_reel = revenu_global_eur_pour_banque - total_mensualites_credits
 
@@ -193,7 +185,6 @@ else:
         > * Le seuil maximal d'endettement toléré en France est généralement de **35%** de tes revenus nets globaux convertis en Euros.
         """)
 
-        # Détail des biens
         data_immo = pd.DataFrame({
             "Bien": ["Maison Principale Frontière", "Appartement Locatif 1", "Appartement Locatif 2"],
             "Prix d'achat (€)": [prix_maison, prix_locatif_1, prix_locatif_2],
@@ -209,9 +200,9 @@ else:
             st.session_state.messages = [{
                 "role": "assistant",
                 "content": (
-                    "Bonjour ! Je suis votre conseiller financier expert pour frontaliers. "
-                    "J'ai pris en compte votre salaire, votre choix de santé ({regime_sante}), "
-                    "votre canton ({canton}) et vos projets immobiliers (1 maison + 2 locatifs). "
+                    f"Bonjour ! Je suis votre conseiller financier expert pour frontaliers. "
+                    f"J'ai pris en compte votre salaire, votre choix de santé ({regime_sante}), "
+                    f"votre canton ({canton}) et vos projets immobiliers (1 maison + 2 locatifs). "
                     "Que souhaitez-vous analyser en premier ?"
                 ),
             }]
